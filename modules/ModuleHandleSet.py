@@ -154,6 +154,12 @@ class HandleSet:
         return size
 
     @staticmethod
+    def adb_connect_local(port):
+        command = abspath(dirname(__file__)) + rf'\adb.exe connect 127.0.0.1:{port}'
+        HandleSet.deal_cmd(command)
+        # result.decode("utf-8")
+
+    @staticmethod
     def adb_device_status():
         """检测设备是否在线，如果在线返回True和在线设备列表，不在线则返回False和异常信息"""
         try:
@@ -187,7 +193,7 @@ class HandleSet:
             return False, '<br>连接出现异常，或设备无响应'
 
     @staticmethod
-    def get_active_window(loop_times=5):
+    def get_active_window(loop_times=3):
         """
         点击鼠标获取目标窗口句柄
         :param loop_times: 倒计时/循环次数

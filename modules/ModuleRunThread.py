@@ -57,6 +57,7 @@ class MatchingThread(QtCore.QThread):
     # 构造函数，thread初始化创建时，传入UI窗体类，可以在run中直接获取GUI中的参数
     def __init__(self, main_window_ui):
         super(MatchingThread, self).__init__()
+        self.mumu12_ports = None
         self.isPause = False
         self.isCancel = False
         self.cond = QtCore.QWaitCondition()
@@ -89,7 +90,7 @@ class MatchingThread(QtCore.QThread):
         :param info:界面配置参数
         :return: 无
         """
-        if_end = info[12]
+        if_end = info[14]
         handle_title = info[2]
         handle_num_list = info[11]
         process_num = info[10]
@@ -155,6 +156,7 @@ class MatchingThread(QtCore.QThread):
             run_mode = self.ui_info.runmod_compatibility.text()
         if_end = str(self.ui_info.if_end_do.currentText())  # 脚本运行正常结束后，执行的操作，未生效
         debug_status = self.ui_info.debug.isChecked()  # 是否启用调试
+        self.mumu12_ports = self.ui_info.mumu12_ports
         custom_target_path = ''
         if self.ui_info.select_target_path_mode_combobox.currentText() == '自定义':
             custom_target_path = self.ui_info.show_target_path.text()
@@ -162,8 +164,10 @@ class MatchingThread(QtCore.QThread):
         screen_scale_rate = float(self.ui_info.screen_rate.value())  # 屏幕压缩分辨率
 
         info = [connect_mod, target_path_mode, handle_title, click_deviation, interval_seconds, loop_min,
-                img_compress_val, match_method, run_mode, custom_target_path, process_num, handle_num, if_end,
-                debug_status, set_priority_status, interval_seconds_max, screen_scale_rate, times_mode]
+                img_compress_val, match_method, run_mode, custom_target_path, process_num, handle_num,
+                self.mumu12_ports, if_end,
+                debug_status, set_priority_status, interval_seconds_max, screen_scale_rate, times_mode
+                ]
 
         # 界面设置的参数写入配置文件
         set_config = ReadConfigFile()
@@ -171,7 +175,7 @@ class MatchingThread(QtCore.QThread):
         if other_setting[0] is True:
             set_config.writ_config_ui_info(info)
 
-        return connect_mod, target_path_mode, handle_title, click_deviation, interval_seconds, loop_min, img_compress_val, match_method, run_mode, custom_target_path, process_num, handle_num, if_end, debug_status, set_priority_status, interval_seconds_max, screen_scale_rate, times_mode
+        return connect_mod, target_path_mode, handle_title, click_deviation, interval_seconds, loop_min, img_compress_val, match_method, run_mode, custom_target_path, process_num, handle_num, self.mumu12_ports, if_end,debug_status, set_priority_status, interval_seconds_max, screen_scale_rate, times_mode
 
     # 运行(入口)
     def run(self):
@@ -191,11 +195,11 @@ class MatchingThread(QtCore.QThread):
             self.finished_signal.emit(True)
             return
 
-        run_times_mode = info[17]
-        debug_status = info[13]
-        set_priority_status = info[14]
-        interval_seconds = [info[4], info[15]]
-        start_match = StartMatch(info[:12])
+        run_times_mode = info[18]
+        debug_status = info[14]
+        set_priority_status = info[15]
+        interval_seconds = [info[4], info[16]]
+        start_match = StartMatch(info[:13])
         loop_seconds = int(info[5] * 60)
         start_time = time.mktime(time.localtime())  # 开始时间的时间戳
         if run_times_mode == "按分钟计算":

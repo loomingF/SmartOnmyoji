@@ -2,7 +2,7 @@
 # @Link    : https://github.com/aicezam/SmartOnmyoji
 # @Version : Python3.7.6
 # @MIT License Copyright (c) 2022 ACE
-
+import pdb
 from configparser import ConfigParser
 from os.path import abspath, dirname, exists
 
@@ -11,7 +11,6 @@ class ReadConfigFile:
     def __init__(self):
         super(ReadConfigFile, self).__init__()
         self.file_path = abspath(dirname(dirname(__file__))) + r'/modules/config.ini'  # 获取配置文件的绝对路径
-
     def read_config_ui_info(self):
         config_ini = ConfigParser()
 
@@ -40,9 +39,10 @@ class ReadConfigFile:
         interval_seconds_max = float(config_ini.get('ui_info', 'interval_seconds_max'))
         screen_scale_rate = config_ini.get('other_setting', 'screen_scale_rate')
         times_mode = config_ini.get('ui_info', 'times_mode')
-
+        mumu12_ports = config_ini.get('ui_info', 'mumu12_ports')
         return [connect_mod, target_path_mode, handle_title, click_deviation, interval_seconds, loop_min,
-                img_compress_val, match_method, run_mode, custom_target_path, process_num, handle_num, if_end,
+                img_compress_val, match_method, run_mode, custom_target_path, process_num, handle_num,
+                mumu12_ports, if_end,
                 debug_status, set_priority_status, interval_seconds_max, screen_scale_rate, times_mode]
 
     def read_config_target_path_files_name(self):
@@ -133,12 +133,12 @@ class ReadConfigFile:
         config_ini.set("ui_info", "custom_target_path", info[9])
         config_ini.set("ui_info", "process_num", info[10])
         config_ini.set("ui_info", "handle_num", info[11])
-        config_ini.set("ui_info", "if_end", info[12])
-        config_ini.set("ui_info", "debug_status", info[13])
-        config_ini.set("ui_info", "set_priority_status", info[14])
-        config_ini.set("ui_info", "interval_seconds_max", info[15])
-        config_ini.set("other_setting", "screen_scale_rate", info[16])
-        config_ini.set("ui_info", "times_mode", info[17])
+        config_ini.set("ui_info", "if_end", info[13])
+        config_ini.set("ui_info", "debug_status", info[14])
+        config_ini.set("ui_info", "set_priority_status", info[15])
+        config_ini.set("ui_info", "interval_seconds_max", info[16])
+        config_ini.set("other_setting", "screen_scale_rate", info[17])
+        config_ini.set("ui_info", "times_mode", info[18])
 
         # 写入文件
         config_ini.write(open(self.file_path, 'w', encoding="utf-8"))

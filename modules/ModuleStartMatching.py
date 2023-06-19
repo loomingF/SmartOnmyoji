@@ -4,12 +4,14 @@
 # @MIT License Copyright (c) 2022 ACE
 import json
 import os
+import pdb
 import random
 from gc import collect
 from os.path import abspath, dirname
 from re import search
 from time import sleep, localtime, strftime
 
+import win32gui
 from win32gui import GetWindowText
 
 from modules.ModuleClickModSet import ClickModSet
@@ -20,7 +22,6 @@ from modules.ModuleGetScreenCapture import GetScreenCapture
 from modules.ModuleGetTargetInfo import GetTargetPicInfo
 from modules.ModuleHandleSet import HandleSet
 from modules.ModuleImgProcess import ImgProcess
-
 
 def time_transform(seconds):
     """
@@ -38,8 +39,19 @@ class StartMatch:
 
     def __init__(self, gui_info):
         super(StartMatch, self).__init__()
-        self.connect_mod, self.target_modname, self.hwd_title, self.click_deviation, self.interval_seconds, self.loop_min, self.compress_val, self.match_method, self.scr_and_click_method, self.custom_target_path, self.process_num, self.handle_num = gui_info
+        self.connect_mod, self.target_modname, self.hwd_title, self.click_deviation, self.interval_seconds, self.loop_min, self.compress_val, self.match_method, self.scr_and_click_method, self.custom_target_path, self.process_num, self.handle_num, self.mumu12_ports = gui_info
         rc = ReadConfigFile()
+        self.adb_handle = None
+        self.title_port_map = {}
+        if len(self.mumu12_ports.strip()) > 0:
+            for val in self.mumu12_ports.split(','):
+                print(rf'val is {val}')
+                strs = val.split(':')
+                print(rf"strs: {strs}")
+                title = strs[0]
+                port = strs[1]
+                HandleSet.adb_connect_local(port)
+                self.title_port_map[title] = port
         self.other_setting = rc.read_config_other_setting()
 
     def set_init(self, set_priority_status):
@@ -70,35 +82,6 @@ class StartMatch:
             print(rf"<br>{abspath(dirname(__file__))}\adb.exe kill-server")
             print(rf"<br>{abspath(dirname(__file__))}\adb.exe devices")
             print("<br>--------------------------------------------")
-            adb_device_connect_status, device_id = HandleSet.adb_device_status()
-            if adb_device_connect_status:
-                print(rf"<br>已连接至：[ {device_id[0]} ]")
-            else:
-                print("<br>连接失败！"
-                      "<br>"
-                      f"<br>若使用模拟器或局域网连接安卓手机，请修改config配置："
-                      f"<br>adb_wifi_status = True"
-                      f"<br>adb_wifi_ip = 'ip及端口号'"
-                      f"<br>局域网使用，请先用USB连接安卓手机，打开调试模式！"
-                      f"<br>以下是各个模拟器默认端口号，但建议使用windows程序模式，也同时兼容以下几种模拟器："
-                      f"<br>MuMu模拟器：127.0.0.1:7555"
-                      f"<br>夜神模拟器：127.0.0.1:62001"
-                      f"<br>逍遥模拟器：127.0.0.1:21503"
-                      f"<br>腾讯手游助手：127.0.0.1:6555"
-                      f"<br>雷电模拟器：无需配置config文件"
-                      "<br>"
-                      "<br>--------------------------------------------")
-
-            # print("<br>连接中……")
-            if self.other_setting[8]:
-                try:
-                    print(f"<br>正在尝试连接 [ {self.other_setting[9]} ] ……")
-                    command = abspath(dirname(__file__)) + rf'\adb.exe connect {self.other_setting[9]}'
-                    HandleSet.deal_cmd(command)
-                except Exception as e:
-                    print(f"<br>连接出现异常，或设备无响应！{e}")
-                    return None
-
         elif self.connect_mod == 'Windows程序窗体':
             if search("模拟器", self.hwd_title) and not search("雷电模拟器", self.hwd_title):
                 HandleSet.deal_cmd(abspath(dirname(__file__)) + r'\adb.exe kill-server')
@@ -106,20 +89,6 @@ class StartMatch:
                 print(rf"<br>{abspath(dirname(__file__))}\adb.exe kill-server")
                 print(rf"<br>{abspath(dirname(__file__))}\adb.exe devices")
                 sleep(2)
-                if search("MuMu模拟器", self.hwd_title):
-                    HandleSet.deal_cmd(abspath(dirname(__file__)) + rf'\adb.exe connect 127.0.0.1:7555')
-                elif search("夜神模拟器", self.hwd_title):
-                    HandleSet.deal_cmd(abspath(dirname(__file__)) + rf'\adb.exe connect 127.0.0.1:62001')
-                elif search("逍遥模拟器", self.hwd_title):
-                    HandleSet.deal_cmd(abspath(dirname(__file__)) + rf'\adb.exe connect 127.0.0.1:21503')
-                elif search("腾讯手游助手", self.hwd_title):
-                    HandleSet.deal_cmd(abspath(dirname(__file__)) + rf'\adb.exe connect 127.0.0.1:6555')
-
-                adb_device_connect_status, device_id = HandleSet.adb_device_status()
-                if adb_device_connect_status:
-                    print(rf"<br>已连接至：[ {device_id[0]} ]")
-                    print("<br>--------------------------------------------")
-
         # 设置游戏进程优先级，避免闪退（部分电脑可能有bug，会报错）
         if set_priority_status:
             if self.process_num == '多开' and self.connect_mod == 'Windows程序窗体':
@@ -290,7 +259,7 @@ class StartMatch:
                     click_mod = ClickModSet.create_click_mod(20, size=(200, 2))  # 构造正态分布模型，只针对标记场景，所以仅小范围偏移
 
                 if connect_mod == 'Windows程序窗体':
-
+                    self.hwd_title = win32gui.GetWindowText(handle_num)
                     if search("雷电模拟器", self.hwd_title):
                         # 针对 雷电模拟器，特殊处理
                         handle_set = HandleSet(self.hwd_title, handle_num)
@@ -311,14 +280,14 @@ class StartMatch:
 
                     elif search("模拟器", self.hwd_title) or search("手游助手", self.hwd_title):
                         # 针对 安卓模拟器 的兼容（使用ADB连接）
-                        adb_device_connect_status, device_id = HandleSet.adb_device_status()
+                        devi = "127.0.0.1:" + self.title_port_map[self.hwd_title]
                         doclick = DoClick(pos, click_mod, handle_num)
                         if debug_status:
                             print(f"<br>模拟器点击成功! ")
 
                         # 如果部分窗口不能点击、截图出来是黑屏，可以使用兼容模式
                         if scr_and_click_method == '正常-可后台':
-                            click_status, click_pos = doclick.adb_click(device_id[0])
+                            click_status, click_pos = doclick.adb_click(devi)
                             if debug_status:
                                 print(f"<br>模拟器正常模式点击成功! ")
                         elif scr_and_click_method == '兼容-不可后台':
@@ -374,6 +343,7 @@ class StartMatch:
         match_method = self.match_method
         compress_val = float(self.compress_val)
         handle_num_list = str(self.handle_num).split(",")
+        # pdb.set_trace()
 
         progress = format((now_time - start_time) / loop_seconds, '.2%')
         print(f"<br>第 [ {i + 1} ] 次匹配, 当前进度 [ {progress} ] "

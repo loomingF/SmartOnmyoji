@@ -6,6 +6,7 @@
 import json
 import os
 import pathlib
+import pdb
 import re
 import subprocess
 import sys
@@ -21,6 +22,10 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
 from modules.ModuleGetConfig import ReadConfigFile
 from modules.ModuleRunThread import MatchingThread, GetActiveWindowThread
 from modules.ui import Ui_MainWindow
+
+# import pydevd_pycharm
+
+# pydevd_pycharm.settrace('localhost', port=8088, stdoutToServer=True, stderrToServer=True)
 
 now_tag = "v0.43"
 
@@ -45,16 +50,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.custom_target_path_value = ui_info[9]
         self.process_num_value = ui_info[10]
         self.handle_num_value = ui_info[11]
-        self.if_end_value = ui_info[12]
-        self.debug_status_value = ui_info[13]
-        self.set_priority_status_value = ui_info[14]
-        self.interval_seconds_value_max = ui_info[15]
-        self.screen_scale_rate_value = ui_info[16]
-        self.times_mode = ui_info[17]
-
+        self.mumu12_ports = ui_info[12]
+        self.if_end_value = ui_info[13]
+        self.debug_status_value = ui_info[14]
+        self.set_priority_status_value = ui_info[15]
+        self.interval_seconds_value_max = ui_info[16]
+        self.screen_scale_rate_value = ui_info[17]
+        self.times_mode = ui_info[18]
         # 控制台消息捕获并输出到运行日志
-        sys.stdout = EmitStr(text_writ=self.output_write)  # 输出结果重定向
-        sys.stderr = EmitStr(text_writ=self.output_write)  # 错误输出重定向
+        # sys.stdout = EmitStr(text_writ=self.output_write)  # 输出结果重定向
+        # sys.stderr = EmitStr(text_writ=self.output_write)  # 错误输出重定向
 
         # 继承重新设置GUI初始状态
         self.btn_pause.setEnabled(False)
@@ -303,6 +308,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         except Exception as e:
             return False
 
+
+
     # 退出程序的槽函数
     def __on_clicked_exit(self):
         if self.btn_start.isHidden():
@@ -352,10 +359,11 @@ class EmitStr(PyQt5.QtCore.QObject):
         self.text_writ.emit(str(text))
 
 
-def except_out_config(exc_type, value, tb):
+def except_out_config(exc_type, value, tb, filename):
     print('<br>Error Information:')
     print('<br>Type:', exc_type)
     print('<br>Value:', value)
+    print('<br>filename', filename)
     print('<br>Traceback:', tb)
 
 
@@ -370,6 +378,7 @@ if __name__ == '__main__':
         config_ini = ReadConfigFile()
         default_info = config_ini.read_config_ui_info()
         target_file_name = config_ini.read_config_target_path_files_name()
+
         myWindow = MainWindow(default_info, target_file_name)
 
         myWindow.setWindowTitle(now_tag)  # 设置窗口标题
